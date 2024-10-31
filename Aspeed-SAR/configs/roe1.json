@@ -1,0 +1,31 @@
+{
+
+    "root_dir"         : "/home/indigo/dataset/speedpp/",
+    "path_pretrain"    : "",
+    "path_results"     : "results_roe1",
+    "device"           : "cuda",
+
+    "start_epoch"      :0,
+    "total_epochs"     :5,
+    "save_epoch"       :5,
+    "save_optimizer"   :false,  
+
+    "mean"            :54.9951,
+    "std"             :30.1454,
+    "batch_size"      :8,
+    "batch_size_test" :1,
+
+    "mean_val"            :54.9951,
+    "std_val"             :30.1454,
+
+    "num_workers"   :4,
+    "pin_memory"    :1,
+    "rows"          :480,
+    "cols"          :768,
+    "lr"            :1e-5,
+
+    "split_submission": "lightbox",
+
+    "isloop":false
+
+}
