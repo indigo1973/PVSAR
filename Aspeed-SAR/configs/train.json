@@ -24,10 +24,7 @@
     "pin_memory"    :1,
     "rows"          :480,
     "cols"          :768,
-    "lr"            :8e-5,
-
-    "activate_lpnp":true,
-    "activate_l3d": true,
+    "lr"            :1e-4,
 
     "split_submission": "train",
 
