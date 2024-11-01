@@ -26,8 +26,6 @@
     "cols"          :768,
     "lr"            :1e-4,
 
-    "activate_lpnp":true,
-    "activate_l3d": true,
 
     "split_submission": "train",
 
