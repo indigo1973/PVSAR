@@ -5,7 +5,7 @@
     "path_results"     : "results_train",
     "device"           : "cuda",
 
-    "start_epoch"      :30,
+    "start_epoch"      :0,
     "total_epochs"     :50,
     "save_epoch"       :5,
     "save_optimizer"   :false,
