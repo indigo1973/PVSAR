@@ -50,9 +50,7 @@ model = torch.load("/home/indigo/Local/Aspeed-SAR/model/new/PVT_SAR_v0.pth").to(
 wandb.init(
     # set the wandb project where this run will be logged
     settings=wandb.Settings(start_method="fork"),
-    # project="SPEED-only_Translation",
     project="SPEED_PVT_SAR",
-
     # track hyperparameters and run metadata
     config={
         "architecture": "PVT_SAR",
