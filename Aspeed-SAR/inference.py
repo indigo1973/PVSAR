@@ -39,10 +39,6 @@ pathlib.Path(path_checkpoints).mkdir(parents=True, exist_ok=True)
 
 model = torch.load("/home/indigo/Local/Aspeed-SAR/model/PVSAR_no_aug/PVSAR_no_aug_epoch_20.pth")
 
-# model = torch.load("/home/indigo/Local/Aspeed-SAR/model/PVT_SAR_v2/PVT_SAR_v2_Album_epoch_34.pt").to(device)
-# model = torch.load("/home/indigo/Local/Aspeed-SAR/model/PVT_SAR_v1/PVT_SAR_v1test_Album_epoch_61.pth").to(device) #good ori
-# model = torch.load("/home/indigo/Local/Aspeed-SAR/model/lightbox_pesudo/PVTSAR_lightbox_008027.pth").to(device) #good ori
-
 
 def get_tango_kpts(config,gpu):
     world_kpts = scipy.io.loadmat(config["root_dir"] + "tangoPoints.mat")
