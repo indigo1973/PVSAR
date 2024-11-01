@@ -47,10 +47,6 @@ pathlib.Path(path_checkpoints).mkdir(parents=True, exist_ok=True)
 # model = torch.load("/home/indigo/Local/Aspeed-SAR/model/PVSAR_no_aug/PVSAR_no_aug_epoch_20.pth").to(device)
 model = torch.load("/home/indigo/Local/Aspeed-SAR/model/new/PVT_SAR_v0.pth").to(device)
 
-
-os.environ["WANDB_API_KEY"] = 'e15960ae0a36c65690657f0f01035fd4a5a9a0f6'
-os.environ["WANDB_MODE"] = "offline"
-
 wandb.init(
     # set the wandb project where this run will be logged
     settings=wandb.Settings(start_method="fork"),
@@ -171,32 +167,29 @@ for epoch in range(config["start_epoch"], config["total_epochs"]):
     loss_max_batch_list = []
 
 
-    # for params in optimizer.param_groups:
-    #     if epoch >= 39:
-    #         params['lr'] = 1e-5
-    #     elif epoch >= 29:
-    #         params['lr'] = 2e-5
-    #     elif epoch > 4:
-    #         params['lr'] -= 3e-6
-
     for params in optimizer.param_groups:
-        if epoch >= 35:
-            params['lr'] = 0.5e-5
-        elif epoch >= 25:
+        if epoch >= 39:
             params['lr'] = 1e-5
-        elif epoch >= 20:
+        elif epoch >= 29:
             params['lr'] = 2e-5
         elif epoch > 4:
-            params['lr'] -= 5e-6
-    #
-    #     if epoch >= 4:
+            params['lr'] -= 3e-6
+
+    # for params in optimizer.param_groups:
+    #     if epoch >= 35:
+    #         params['lr'] = 0.5e-5
+    #     elif epoch >= 25:
     #         params['lr'] = 1e-5
+    #     elif epoch >= 20:
+    #         params['lr'] = 2e-5
+    #     elif epoch > 4:
+    #         params['lr'] -= 5e-6
+
     print('\n')
     print("Epoch: ", epoch, "       ", 'Learing Rate is ',params['lr'])
 
     for i, data in enumerate(tqdm(train_iter)):
         optimizer.zero_grad()
-
         img = data["image"].to(device)
         # img = aug_intensity(img)    #N x 3 x 480 x 768
 
@@ -204,10 +197,8 @@ for epoch in range(config["start_epoch"], config["total_epochs"]):
         t_gt = data["r0"].to(device)
         kpts_gt = (data["kpts_2Dim"]).to(device)  #in train got torch.Size([8, 22])
         kpts_gt = kpts_gt.reshape([kpts_gt.shape[0], 11, 2])  # N * 11 *2
-
         # Obtain the prediction
         logit, keypoint = model(img)
-
         bs, k, h, w = logit.size()
         assert k == keypoint.size(1) and keypoint.size(2) == 2
 
@@ -215,17 +206,13 @@ for epoch in range(config["start_epoch"], config["total_epochs"]):
         cls_score = logit.reshape(bs*k, h*w)
         # get reg score
         pred_keypoints = keypoint.reshape(bs*k, 2, h*w).permute(0, 2, 1)
-
-
         kpts_gt = kpts_gt.reshape(bs * k, 2)[:, None, :]
         kpts_gt[..., 0] /= (w/img_normal_factor)
         kpts_gt[..., 1] /= (h/img_normal_factor)
-
         dist_mat = torch.abs(pred_keypoints - kpts_gt)
         dist_mat = dist_mat * 16.0
         # dist_mat = dist_mat * 64.0
         reg_score = torch.exp(-dist_mat.sum(dim=2))
-
         norm_cls_score = cls_score / cls_score.sum(dim=1, keepdim=True)
         # norm_cls_score = cls_score
 
@@ -243,13 +230,8 @@ for epoch in range(config["start_epoch"], config["total_epochs"]):
     loss_max  = (max(loss_max_batch_list))
     print(f'Train got loss_mean {loss_mean} & loss_max {loss_max}')
 
-    # torch.save(model, f"/home/indigo/Local/Aspeed-SAR/model/PVT_SAR_v4/PVT_SAR_v4_randint_epoch_{epoch}.pth")
+    torch.save(model, f"/home/indigo/Local/Aspeed-SAR/model/PVT_SAR_v4/PVT_SAR_v4_randint_epoch_{epoch}.pth")
     # torch.save(model, f"/home/indigo/Local/Aspeed-SAR/model/PVSAR_no_aug/PVSAR_no_aug_epoch_{epoch}.pth")
-    torch.save(model, f"/home/indigo/Local/Aspeed-SAR/model/new/PVSAR1029_epoch_{epoch}.pth")
-
-
-    # if epoch >17 and epoch % 5 == 0:
-
 
     # ----------------------------- #
     #        Val Epoch              #
@@ -260,9 +242,7 @@ for epoch in range(config["start_epoch"], config["total_epochs"]):
 
     with torch.no_grad():
         model.eval()
-
         for i, data in enumerate(tqdm(val_iter)):
-
             img = data["image"].to(device)
             # img = aug_intensity_val(img)
 
@@ -272,9 +252,7 @@ for epoch in range(config["start_epoch"], config["total_epochs"]):
             kpts_gt = kpts_gt.reshape([config["batch_size_test"], 11, 2])  # N * 11 *2
 
             # Obtain the prediction
-
             logit, keypoint = model(img)
-
             bs, k, h, w = logit.shape       #   [1, 11, 480, 768]
             logits = logit.reshape(bs*k, h*w)
             logits = logits / logits.sum(dim=1, keepdim=True)
@@ -285,12 +263,10 @@ for epoch in range(config["start_epoch"], config["total_epochs"]):
             coords[..., 1] *= h
             preds = coords.reshape(bs, k, 2).cpu().numpy()  #N x 11 x2
             maxvals = maxvals.reshape(bs, k).cpu().numpy()  #N x 11
-
             # kpts_gt = kpts_gt[0].cpu().data.numpy().squeeze()
             kpts_pre = preds[0] / img_normal_factor
             aux, rvecs, t_est, inliers = cv2.solvePnPRansac(kpts_3d_gt, kpts_pre, cameraMatrix, distCoeffs,
                                                             confidence=0.99, reprojectionError=20.0,flags=cv2.USAC_MAGSAC)
-
             if rvecs is not None:
                 q_ESA = kornia.geometry.axis_angle_to_quaternion(torch.tensor(rvecs.T)).to(device)
                 t_ESA = torch.tensor(t_est.T).to(device)
@@ -356,16 +332,13 @@ for epoch in range(config["start_epoch"], config["total_epochs"]):
         for i, data in enumerate(tqdm(sun_iter)):
             img = data["image"].to(device)
             # img = aug_intensity_test(img)
-
             q_gt = data["q0"].to(device)  # Qxyzw
             t_gt = data["r0"].to(device)
             kpts_gt = (data["kpts_2Dim"]).to(device)  # in train got torch.Size([8, 22])
             kpts_gt = kpts_gt.reshape([config["batch_size_test"], 11, 2])  # N * 11 *2
 
             # Obtain the prediction
-
             logit, keypoint = model(img)
-
             bs, k, h, w = logit.shape  # [1, 11, 480, 768]
             logits = logit.reshape(bs * k, h * w)
             logits = logits / logits.sum(dim=1, keepdim=True)
@@ -376,7 +349,6 @@ for epoch in range(config["start_epoch"], config["total_epochs"]):
             coords[..., 1] *= h
             preds = coords.reshape(bs, k, 2).cpu().numpy()  # N x 11 x2
             maxvals = maxvals.reshape(bs, k).cpu().numpy()  # N x 11
-
             kpts_gt = kpts_gt[0].cpu().data.numpy().squeeze()
             kpts_pre = preds[0] / img_normal_factor
             aux, rvecs, t_est, inliers = cv2.solvePnPRansac(kpts_3d_gt, kpts_pre, cameraMatrix, distCoeffs,
@@ -388,7 +360,6 @@ for epoch in range(config["start_epoch"], config["total_epochs"]):
                 t_ESA = torch.tensor(t_est.T).to(device)
 
             speed, speed_t, speed_r = speedscore.compute_ESA_score(t_ESA, q_ESA, t_gt, q_gt, applyThresh=True)
-
             speed_total_sunlamp += speed
             speed_t_total_sunlamp += speed_t
             speed_r_total_sunlamp += speed_r
